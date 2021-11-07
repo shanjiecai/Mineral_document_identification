@@ -5,7 +5,8 @@ import jpype
 
 # 路径
 jvmPath = jpype.getDefaultJVMPath()  # 获得系统的jvm路径
-ext_classpath = r"/Users/jiecai/PycharmProjects/政策文本分类/ner/hanlp/hanlp-1.8.2.jar:/Users/jiecai/PycharmProjects/政策文本分类/ner/hanlp"
+WORK_DIR = "/Users/jiecai/PycharmProjects/矿产文件识别/"
+ext_classpath = f"{WORK_DIR}ner/hanlp/hanlp-1.8.2.jar:{WORK_DIR}ner/hanlp"
 jvmArg = '-Djava.class.path=' + ext_classpath
 jpype.startJVM(jvmPath, jvmArg, "-Xms1g", "-Xmx1g")
 
