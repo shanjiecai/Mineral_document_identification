@@ -9,18 +9,21 @@ import jieba
 # from win32com import client
 from hanlp_ner2 import *
 from string import digits
+from get_keywords import *
 import jpype
+import pprint
+from es import upload_data
 
 
-def doc2Docx(root, fileName):
-    fileName = os.path.join(root,fileName)
-    word = client.Dispatch("Word.Application")
-    doc = word.Documents.Open(fileName)
-    doc.SaveAs(fileName + "x", 16, False, "", True, "", False, False, False, False)
-    # os.remove(fileName)
-    doc.Close()
-    word.Quit()
-    return fileName+"x"
+# def doc2Docx(root, fileName):
+#     fileName = os.path.join(root,fileName)
+#     word = client.Dispatch("Word.Application")
+#     doc = word.Documents.Open(fileName)
+#     doc.SaveAs(fileName + "x", 16, False, "", True, "", False, False, False, False)
+#     # os.remove(fileName)
+#     doc.Close()
+#     word.Quit()
+#     return fileName+"x"
 
 
 def get_mineral_name():
@@ -115,19 +118,31 @@ def SplitSentence(content):
     return rst
 
 
+es_dataset = []
 def read_docx(path):
+    es_data = {}
     print(f"------------{path}------------")
     print("识别开始")
     document = Document(path)
+    es_data['filename'] = path.split("/")[-1]
     para_list = []
     para_index = 1
+    print("开始识别关键词")
+    full_content = "\n".join(paragraph.text.strip() for paragraph in document.paragraphs)
+    es_data["full_content"] = full_content
+    keywords = get_keywords_aminer(full_content)
+    print(keywords)
+    keyword_list = []
+    for k in keywords:
+        keyword_list.append(k[0])
+    es_data["keyword"] = ",".join(keyword_list)
+    es_data["entity"] = {}
     for paragraph in document.paragraphs:
         mineral_tag = 0
         classify_tag = 0
-
         if paragraph.text.strip():
             # ner(paragraph.text.strip())
-            word_segment_list = word_segment(paragraph.text.strip())
+            word_segment_list = jieba.cut(paragraph.text.strip())
             for w in word_segment_list:
                 if w in mineral_name:
                     mineral_tag=1
@@ -135,12 +150,15 @@ def read_docx(path):
                     classify_tag=1
             if classify_tag and mineral_tag:
                 print(f"第{para_index}段：", paragraph.text.strip())
-                print("包含的实体为：", ner_dict_result(paragraph.text.strip()))
+                ner_dict = ner_dict_result(paragraph.text.strip())
+                print("包含的实体为：\n", ner_dict)
                 para_index += 1
                 # sentence_list = SplitSentence(paragraph.text.strip())
                 # for sent_index, sentence in enumerate(sentence_list):
                 #     print(f"第{sent_index}句实体：", ner(sentence))
                 para_list.append(paragraph.text.strip())
+                es_data["entity"] = ner_dict
+    es_dataset.append(es_data)
     return para_list
 
 
@@ -192,17 +210,19 @@ if __name__ == "__main__":
     td_list = ['TD', 'td', '推断']
     zs_list = ['证实']
     kx_list = ['可信']
-    for root, dirs, files in os.walk(r"./word"):
+    for root, dirs, files in os.walk(r"./word_new"):
         path_list = []
         for file in files:
             houzhui = file.split(".")[-1]
-            if houzhui=="doc":
-                file = doc2Docx(root, file)
+            # if houzhui=="doc":
+            #     file = doc2Docx(root, file)
             path_list.append(os.path.join(root, file))
     # path = "./word/GQTCBG_420122402_乌龙泉矿生产矿山矿产资源国情调查报告.docx"
     for path in path_list:
         para_list = read_docx(path)
         if para_list:
             select_para(para_list)
+    print(es_dataset)
+    upload_data(es_dataset)
     jpype.shutdownJVM()  # 最后关闭JVM虚拟机
     # recognize("调整后的保有数据为：石灰岩TM:13477千吨，KZ:16015千吨，TD:2992千吨；白云岩TM:618千吨，KZ:7374千吨，TD:0千吨。调整变化量为：石灰岩保有TM:-871千吨，KZ:-360千吨；白云岩保有TM:-551千吨，KZ:-305千吨。")

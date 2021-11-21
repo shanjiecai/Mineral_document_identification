@@ -5,8 +5,8 @@ import jpype
 
 # 路径
 jvmPath = jpype.getDefaultJVMPath()  # 获得系统的jvm路径
-WORK_DIR = "/Users/jiecai/PycharmProjects/矿产文件识别/"
-ext_classpath = f"{WORK_DIR}ner/hanlp/hanlp-1.8.2.jar:{WORK_DIR}ner/hanlp"
+WORK_DIR = "/Users/jiecai/PycharmProjects/矿产文件识别/"  # 需要修改为工作目录
+ext_classpath = r"./ner/hanlp/hanlp-1.8.2.jar:./ner/hanlp"
 jvmArg = '-Djava.class.path=' + ext_classpath
 jpype.startJVM(jvmPath, jvmArg, "-Xms1g", "-Xmx1g")
 
@@ -87,7 +87,7 @@ def ner_dict_result(sentence_str):
     print(sentence)
     total_dict = {}
     a = total_result(Place_Recognize(sentence))
-    print(a)
+    # print(a)
     b = single_result('place', a)
     c = total_result(PersonName_Recognize(sentence))
     d = single_result('person', c)
@@ -96,12 +96,13 @@ def ner_dict_result(sentence_str):
     g = total_result(NLP_tokenizer(sentence))
     h = time_result(g)
     total_list = [i for i in [b, d, f, h]]
-    total_dict.update(place=total_list[0], person=total_list[1], organization=total_list[2], time=total_list[3])
+    # total_dict.update(pla=total_list[0], per=total_list[1], org=total_list[2], time=total_list[3])
+    total_dict.update(pla=total_list[0], per=total_list[1], org=total_list[2])
     # jpype.shutdownJVM()  # 关闭JVM虚拟机
     return total_dict
 
 
 # # 测试
-# test_sentence = "本次调查工作，首先收集了省牵头单位提供的2019年矿产资源利用现状调查资料，然后从省地质资料收集到矿区最新地质报告、储量核实报告等，同时收集了武汉市江夏区矿产资源管理总站乌龙泉矿2019年储量矿山储量数据新老转换的成果、乌龙泉矿2020年储量年报，再就是积极和矿山联系，收集到了矿山最新的采矿证，最新的开发利用方案、占用矿产资源储量登记书、企业信息公示（2019、2020），些外还有测量控制点成果表、矿山成品矿生产报表2020、成品矿生产报表2021、生产报表2020、生产报表2021等资料。"
+test_sentence = "本次调查工作，首先收集了省牵头单位提供的2019年矿产资源利用现状调查资料，然后从省地质资料收集到矿区最新地质报告、储量核实报告等，同时收集了武汉市江夏区矿产资源管理总站乌龙泉矿2019年储量矿山储量数据新老转换的成果、乌龙泉矿2020年储量年报，再就是积极和矿山联系，收集到了矿山最新的采矿证，最新的开发利用方案、占用矿产资源储量登记书、企业信息公示（2019、2020），些外还有测量控制点成果表、矿山成品矿生产报表2020、成品矿生产报表2021、生产报表2020、生产报表2021等资料。"
 # print(ner_dict_result(test_sentence))
 
